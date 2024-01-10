@@ -1,7 +1,7 @@
 // Functions to compute gradients using finite difference.
 // Based on the functions in https://github.com/PatWie/CppNumericalSolvers
 // and rewritten to use Eigen
-#include "finitediff.hpp"
+#include "finitediff/finitediff.hpp"
 
 #include <array>
 #include <vector>

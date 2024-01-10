@@ -21,9 +21,11 @@ endif()
 
 project(FiniteDiff
         DESCRIPTION "A simple finite difference library."
-        LANGUAGES CXX)
+        LANGUAGES CXX
+        VERSION 1.0.2)
 
-option(FINITE_DIFF_BUILD_UNIT_TESTS  "Build unit-tests"  ${FINITE_DIFF_TOPLEVEL_PROJECT})
+option(FINITE_DIFF_INSTALL "Install CMake targets during install step."
+       ${FINITE_DIFF_TOPLEVEL_PROJECT})
 
 # Set default minimum C++ standard
 if(FINITE_DIFF_TOPLEVEL_PROJECT)
@@ -39,51 +41,84 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/recipes/")
 # Finite Diff Library
 ################################################################################
 
-add_library(finitediff_finitediff
+add_library(finitediff
     src/finitediff.cpp
 )
-add_library(finitediff::finitediff ALIAS finitediff_finitediff)
+add_library(finitediff::finitediff ALIAS finitediff)
 
 # Public include directory
-target_include_directories(finitediff_finitediff PUBLIC src)
+target_include_directories(
+  finitediff
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:include>)
 
 ################################################################################
 # Optional Definitions
 ################################################################################
 
 # For MSVC, do not use the min and max macros.
-target_compile_definitions(finitediff_finitediff PUBLIC NOMINMAX)
+target_compile_definitions(finitediff PUBLIC NOMINMAX)
 
 ################################################################################
 # Dependencies
 ################################################################################
 
-# Extra warnings
-include(finitediff_warnings)
-target_link_libraries(finitediff_finitediff PRIVATE finitediff::warnings)
-
 # Eigen
-include(eigen)
-target_link_libraries(finitediff_finitediff PUBLIC Eigen3::Eigen)
+find_package(Eigen3 REQUIRED NO_MODULE)
+target_link_libraries(finitediff PUBLIC Eigen3::Eigen)
 
 # Logger
-include(spdlog)
-target_link_libraries(finitediff_finitediff PUBLIC spdlog::spdlog)
+find_package(spdlog REQUIRED)
+target_link_libraries(finitediff PUBLIC spdlog::spdlog)
 
 ################################################################################
 # Compiler options
 ################################################################################
 
 # Use C++11
-target_compile_features(finitediff_finitediff PUBLIC cxx_std_11)
+target_compile_features(finitediff PUBLIC cxx_std_11)
 
 ################################################################################
-# Tests
+# Installation
 ################################################################################
+if (FINITE_DIFF_INSTALL)
+    include(GNUInstallDirs)
 
-if(FINITE_DIFF_BUILD_UNIT_TESTS)
-    include(CTest)
-    enable_testing()
+    # Install library headers.
+    install(
+        DIRECTORY include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
 
-    add_subdirectory(tests)
+    # Install library binaries.
+    install(
+        TARGETS finitediff
+        EXPORT ${PROJECT_NAME}Targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+
+    include(CMakePackageConfigHelpers)
+
+    configure_package_config_file(
+        FiniteDiffConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/finitediff)
+
+    write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+    VERSION ${PACKAGE_VERSION}
+    COMPATIBILITY SameMajorVersion)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+                ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/finitediff)
+
+    # Perform installation.
+    install(EXPORT ${PROJECT_NAME}Targets
+            FILE ${PROJECT_NAME}Targets.cmake
+            NAMESPACE finitediff::
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/finitediff
+    )
 endif()
