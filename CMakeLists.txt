@@ -29,7 +29,7 @@ option(FINITE_DIFF_INSTALL "Install CMake targets during install step."
 
 # Set default minimum C++ standard
 if(FINITE_DIFF_TOPLEVEL_PROJECT)
-    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD 20)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
@@ -76,7 +76,7 @@ target_link_libraries(finitediff PUBLIC spdlog::spdlog)
 ################################################################################
 
 # Use C++11
-target_compile_features(finitediff PUBLIC cxx_std_11)
+target_compile_features(finitediff PUBLIC cxx_std_20)
 
 ################################################################################
 # Installation
